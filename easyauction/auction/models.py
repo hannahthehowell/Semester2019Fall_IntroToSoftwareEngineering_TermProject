@@ -9,6 +9,9 @@ import os
 # Extends the base user class to preserve compatibility with Django's auth backend
 # TODO: catch errors
 class AuctionUser(AbstractUser):
+    guaranteed_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    possible_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
     # Creates auction setting the current user as admin
     def create_auction(self, name: str, description: str = None):
         if description:
@@ -41,6 +44,19 @@ class AuctionUser(AbstractUser):
     def archive_auction(self, pk: int):
         auction = self.get_auction(pk=pk)
         auction.archive()
+
+    def watch_item(self, pk: int):
+        item = Item.objects.get(pk=pk)
+        self.watched_items.add(item)
+
+    def unwatch_item(self, pk:int):
+        item = Item.objects.get(pk=pk)
+        self.watched_items.remove(item)
+
+
+    def send_notification(self, text, item):
+        notification = self.notification_set.create(text=text, item=item)
+        return notification
 
 
 class Auction(models.Model):
@@ -103,6 +119,7 @@ class Item(models.Model):
     paid_time = models.DateTimeField(null=True, blank=True)
     auction = models.ForeignKey(Auction, on_delete=models.CASCADE)
     winner = models.ForeignKey(AuctionUser, on_delete=models.SET_NULL, null=True, blank=True)
+    followers = models.ManyToManyField(AuctionUser, related_name='watched_items', related_query_name='watched_item')
 
     def __str__(self):
         return self.name
@@ -125,3 +142,10 @@ class Bid(models.Model):
 
     def __str__(self):
         return f'Bid for ${self.price} on item {self.item.name} by user {self.bidder.username}'
+
+
+class Notification(models.Model):
+    user = models.ForeignKey(AuctionUser, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, default=None)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    text = models.TextField()
