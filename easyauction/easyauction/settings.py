@@ -28,11 +28,13 @@ DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1',
                  'localhost',
                  'testserver',
+                 '192.168.1.40',  # Tristan Laptop Home (used for testing mobile)
                  '192.168.1.9',  # Tristan Laptop Home
                  '192.168.1.5',  # Tristan Desktop
                  '10.1.10.77',  # Garrett Laptop Home
                  '144.39.224.45',   # Garrett Laptop Class
-                 '10.0.0.108'
+                 '10.0.0.108',
+                 'tecsauction.org'
                  ]
 
 # Application definition
